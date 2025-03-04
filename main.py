@@ -11,7 +11,7 @@ space.gravity = (0, 0)
 #load font
 font = pygame.font.SysFont('Arial', 30)
 
-longBar = make_bar((50,380), 300, space, math.pi/4)
+levelBars = get_bars(space)
 
 
 running = True
@@ -23,9 +23,8 @@ while running:
 
     screen.fill((0,0,0))
 
-    
-    for i in range(len(longBar)):
-        screen.blit(barImage, dest=pygame.Rect(longBar[i].bb.left, longBar[i].bb.top, longBar[i].bb.right - longBar[i].bb.left, longBar[i].bb.top - longBar[i].bb.bottom))
+    for i in range(len(levelBars)):
+        screen.blit(barImage, dest=pygame.Rect(levelBars[i].bb.left, levelBars[i].bb.top, levelBars[i].bb.right - levelBars[i].bb.left, levelBars[i].bb.top - levelBars[i].bb.bottom))
 
     
     pygame.display.flip()
