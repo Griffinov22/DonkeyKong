@@ -1,6 +1,5 @@
 import pygame
 import pymunk
-import math
 from block_handler import *
 
 pygame.init()
@@ -11,7 +10,7 @@ space.gravity = (0, 0)
 #load font
 font = pygame.font.SysFont('Arial', 30)
 
-levelBars = get_bars(space)
+bg = get_static_background(space)
 
 
 running = True
@@ -23,8 +22,18 @@ while running:
 
     screen.fill((0,0,0))
 
-    for i in range(len(levelBars)):
-        screen.blit(barImage, dest=pygame.Rect(levelBars[i].bb.left, levelBars[i].bb.top, levelBars[i].bb.right - levelBars[i].bb.left, levelBars[i].bb.top - levelBars[i].bb.bottom))
+    for key, bgObj in bg.items():
+        for i in range(len(bgObj["items"])):
+            item = bgObj["items"][i]
+            image = bgObj["image"]
+            rect = pygame.Rect(item.bb.left, item.bb.top, item.bb.right - item.bb.left, item.bb.top - item.bb.bottom)
+            
+            if rect.height < image.get_height():
+                cropped_image = pygame.transform.chop(image, rect)
+                screen.blit(cropped_image, rect)
+            else:
+                screen.blit(image, rect)
+
 
     
     pygame.display.flip()

@@ -7,11 +7,62 @@ barImage = pygame.image.load('images/bar.png')
 barWidth = barImage.get_width()
 barHeight = barImage.get_height()
 
+ladderImage = pygame.image.load('images/ladder.png')
+ladderWidth = ladderImage.get_width()
+ladderHeight = ladderImage.get_height()
+
 # GLOBALS
 BARS_CONFIG = [
+    # bottom bar and ending ramp
         [(50,380), 160, 0],
-        [(215,380), 140, 4]
+        [(215,380), 140, 3],
+    # bar 2 
+        [(50,330), 290, -3],
+    # bar 3
+        [(70, 300), 290, 3],
+    # bar 4
+        [(50, 230), 290, -3],
+    # bar 5
+        [(70, 200), 290, 3],
+    # bar 6 small ram and bar
+        [(250, 150), 90, -3],
+        [(50, 150), 195, 0],
+    # bar 7 princess bar
+        [(150, 115), 80, 0]
     ]
+
+LADDERS_CONFIG = [
+    [(330,345), 18],
+    [(200, 295), 32],
+    [(100, 300), 24],
+    [(150, 279), 10],
+    [(150, 239), 10],
+    [(223, 241), 44],
+    [(330, 245), 32],
+    [(300, 225), 12],
+    [(300, 190), 12],
+    [(180, 195), 32],
+    [(80, 200), 24],
+    [(205, 175), 12],
+    [(205, 150), 12],
+    [(320, 155), 24],
+    [(225, 118), 24],
+    [(135, 85), 60],
+    [(115, 85), 60]
+]
+
+def get_static_background(space):
+    bg = {
+        "bars": {
+            "items": get_bars(space),
+            "image": barImage
+            },
+        "ladders" : {
+            "items":get_ladders(space),
+            "image": ladderImage
+            }
+    }
+    return bg
 
 def get_bars(space):
     '''
@@ -37,7 +88,7 @@ def make_bar(pos,width,space, rotation = 0) -> list[pymunk.Poly]:
     bars = []
 
     for i in range(0, width + 1, barWidth):
-        barBody = pymunk.Body(1,100, pymunk.Body.STATIC)
+        barBody = pymunk.Body(pymunk.Body.STATIC)
         
         offset_y = i * math.sin(math.radians(rotation))
 
@@ -48,17 +99,33 @@ def make_bar(pos,width,space, rotation = 0) -> list[pymunk.Poly]:
         space.add(barBody, barShape)
         bars.append(barShape)
 
-    # UNCOMMENT IF YOU WANT TO HANDLE THE EXTRA SPACING
-    # rightSide = width + pos[0]
-    # if rightSide % barWidth != 0:
-    #     extraPxWidth = rightSide % barWidth
-    #     barBody = pymunk.Body(1,100, pymunk.Body.STATIC) 
-    #     offset_y = (rightSide - extraPxWidth) * math.sin(math.radians(rotation))
-    #     barBody.position = (rightSide, pos[1] - offset_y)
-    #     barBody.angle = rotation
-    #     barShape = pymunk.Poly.create_box(barBody, (barWidth, barHeight))       
-    #     space.add(barBody, barShape)
-    #     bars.append(barShape)
-
     return bars
 
+def get_ladders(space):
+    ladderBodies = []
+    for i in range(len(LADDERS_CONFIG)):
+        pos = LADDERS_CONFIG[i][0]
+        height = LADDERS_CONFIG[i][1]
+        body = make_ladder(pos, height, space)
+        ladderBodies.append(body)
+    flat_list = list(itertools.chain(*ladderBodies))
+    return flat_list
+
+def make_ladder(pos, height, space):
+    ladders = []
+
+    for i in range(0, height + 1, ladderHeight):
+        ladderBody = pymunk.Body(pymunk.Body.STATIC)
+        ladderBody.position = (pos[0], pos[1] + i)
+
+        if i + ladderHeight > height:
+            # Create a partial ladder segment for the remaining height
+            remaining_height = height - i
+            ladderShape = pymunk.Poly.create_box(ladderBody, (ladderWidth, remaining_height))
+        else:
+            ladderShape = pymunk.Poly.create_box(ladderBody, (ladderWidth, ladderHeight))
+
+        space.add(ladderBody, ladderShape)
+        ladders.append(ladderShape)
+
+    return ladders
