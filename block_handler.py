@@ -11,6 +11,10 @@ ladderImage = pygame.image.load('images/ladder.png')
 ladderWidth = ladderImage.get_width()
 ladderHeight = ladderImage.get_height()
 
+tallBarrelImage = pygame.image.load('images/tall-barrel.png')
+tallBarrelImageHeight = tallBarrelImage.get_height()
+tallBarrelImageWidth = tallBarrelImage.get_width()
+
 # GLOBALS
 BARS_CONFIG = [
     # bottom bar and ending ramp
@@ -51,6 +55,13 @@ LADDERS_CONFIG = [
     [(115, 85), 60]
 ]
 
+TALL_BARRELS_CONFIG = [
+    [(50, 130)],
+    [(50, 115)],
+    [(60, 130)],
+    [(60, 115)],
+]
+
 def get_static_background(space):
     bg = {
         "bars": {
@@ -60,7 +71,11 @@ def get_static_background(space):
         "ladders" : {
             "items":get_ladders(space),
             "image": ladderImage
-            }
+            },
+        "tallBarells": {
+            "items": get_tallBarrels(space),
+            "image": tallBarrelImage
+        }
     }
     return bg
 
@@ -129,3 +144,20 @@ def make_ladder(pos, height, space):
         ladders.append(ladderShape)
 
     return ladders
+
+def get_tallBarrels(space):
+    barrelBodies = []
+    for i in range(len(TALL_BARRELS_CONFIG)):
+        pos = TALL_BARRELS_CONFIG[i][0]
+        body = make_tallBarrel(pos, space)
+        barrelBodies.append(body)
+    return barrelBodies
+
+def make_tallBarrel(pos, space):
+        barrelBody = pymunk.Body(pymunk.Body.STATIC)
+        barrelBody.position = (pos[0], pos[1])
+
+        barrelShape = pymunk.Poly.create_box(barrelBody, (tallBarrelImageWidth, tallBarrelImageHeight))
+
+        space.add(barrelBody, barrelShape)
+        return barrelShape
