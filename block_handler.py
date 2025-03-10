@@ -161,3 +161,36 @@ def make_tallBarrel(pos, space):
 
         space.add(barrelBody, barrelShape)
         return barrelShape
+
+def draw_bg(screen, space):
+    bg = get_static_background(space)
+    for key, bgObj in bg.items():
+        for i in range(len(bgObj["items"])):
+            item = bgObj["items"][i]
+            image = bgObj["image"]
+            rect = pygame.Rect(item.bb.left, item.bb.top, item.bb.right - item.bb.left, item.bb.top - item.bb.bottom)
+            
+            if rect.height < image.get_height():
+                cropped_image = pygame.transform.chop(image, rect)
+                screen.blit(cropped_image, rect)
+            else:
+                screen.blit(image, rect)
+
+def draw_box(screen, body, shape):
+    pos = body.position
+    bb = shape.bb
+    width = bb.right-bb.left
+    height = bb.top - bb.bottom
+    topLeft = (pos[0] - width / 2, pos[1] - height / 2)
+    pygame.draw.rect(screen, (255, 255, 255),
+                     (topLeft[0],topLeft[1],width,height))
+
+def draw_image(screen, body, shape, img):
+    pos = body.position
+    bb = shape.bb
+    width = bb.right-bb.left
+    height = bb.top - bb.bottom
+    topLeft = (pos[0] - width / 2, pos[1] - height / 2)
+    screen.blit(img, topLeft)
+
+
