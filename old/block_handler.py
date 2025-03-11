@@ -1,6 +1,7 @@
 import pymunk
 import pygame
 import math
+import COLLISIONTYPES
 import itertools
 
 barImage = pygame.image.load('images/bar.png')
@@ -36,30 +37,30 @@ BARS_CONFIG = [
     ]
 
 LADDERS_CONFIG = [
-    [(330,345), 18],
-    [(200, 295), 32],
-    [(100, 300), 24],
-    [(150, 279), 10],
-    [(150, 239), 10],
-    [(223, 241), 44],
-    [(330, 245), 32],
-    [(300, 225), 12],
-    [(300, 190), 12],
-    [(180, 195), 32],
-    [(80, 200), 24],
-    [(205, 175), 12],
-    [(205, 150), 12],
-    [(320, 155), 24],
-    [(225, 118), 24],
-    [(135, 85), 60],
-    [(115, 85), 60]
+    [(330,350), 16],
+    [(200, 300), 32],
+    [(100, 305), 24],
+    [(150, 285), 10],
+    [(150, 245), 10],
+    [(223, 248), 44],
+    [(330, 250), 32],
+    [(300, 231), 12],
+    [(300, 199), 12],
+    [(180, 200), 32],
+    [(80, 205), 24],
+    [(205, 180), 12],
+    [(205, 155), 12],
+    [(320, 160), 24],
+    [(225, 122), 24],
+    [(135, 89), 60],
+    [(115, 89), 60]
 ]
 
 TALL_BARRELS_CONFIG = [
-    [(50, 130)],
-    [(50, 115)],
-    [(60, 130)],
-    [(60, 115)],
+    [(50, 137)],
+    [(50, 122)],
+    [(60, 137)],
+    [(60, 122)],
 ]
 
 def get_static_background(space):
@@ -103,14 +104,17 @@ def make_bar(pos,width,space, rotation = 0) -> list[pymunk.Poly]:
     bars = []
 
     for i in range(0, width + 1, barWidth):
-        barBody = pymunk.Body(pymunk.Body.STATIC)
+        barBody = pymunk.Body(body_type=pymunk.Body.STATIC)
         
         offset_y = i * math.sin(math.radians(rotation))
 
         barBody.position = (pos[0] + i, pos[1] - offset_y)
 
         barShape = pymunk.Poly.create_box(barBody, (barWidth, barHeight))
-        
+        barShape.collision_type = COLLISIONTYPES.bar_coll
+        barShape.elasticity = 0 # prevent bouncing
+        barShape.friction = 1
+
         space.add(barBody, barShape)
         bars.append(barShape)
 
@@ -130,7 +134,7 @@ def make_ladder(pos, height, space):
     ladders = []
 
     for i in range(0, height + 1, ladderHeight):
-        ladderBody = pymunk.Body(pymunk.Body.STATIC)
+        ladderBody = pymunk.Body(1,100,pymunk.Body.STATIC)
         ladderBody.position = (pos[0], pos[1] + i)
 
         if i + ladderHeight > height:
@@ -139,6 +143,8 @@ def make_ladder(pos, height, space):
             ladderShape = pymunk.Poly.create_box(ladderBody, (ladderWidth, remaining_height))
         else:
             ladderShape = pymunk.Poly.create_box(ladderBody, (ladderWidth, ladderHeight))
+        
+        ladderShape.collision_type = COLLISIONTYPES.ladder_coll
 
         space.add(ladderBody, ladderShape)
         ladders.append(ladderShape)
@@ -154,7 +160,7 @@ def get_tallBarrels(space):
     return barrelBodies
 
 def make_tallBarrel(pos, space):
-        barrelBody = pymunk.Body(pymunk.Body.STATIC)
+        barrelBody = pymunk.Body(100, 1, pymunk.Body.STATIC)
         barrelBody.position = (pos[0], pos[1])
 
         barrelShape = pymunk.Poly.create_box(barrelBody, (tallBarrelImageWidth, tallBarrelImageHeight))
@@ -162,14 +168,14 @@ def make_tallBarrel(pos, space):
         space.add(barrelBody, barrelShape)
         return barrelShape
 
-def draw_bg(screen, space):
-    bg = get_static_background(space)
+def draw_bg(screen, bg):
     for key, bgObj in bg.items():
         for i in range(len(bgObj["items"])):
             item = bgObj["items"][i]
             image = bgObj["image"]
-            rect = pygame.Rect(item.bb.left, item.bb.top, item.bb.right - item.bb.left, item.bb.top - item.bb.bottom)
-            
+            pos = item.body.position
+            rect = image.get_rect(center=(pos[0], pos[1]))
+
             if rect.height < image.get_height():
                 cropped_image = pygame.transform.chop(image, rect)
                 screen.blit(cropped_image, rect)

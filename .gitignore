@@ -1,2 +1,4 @@
+old/__pycache__/*
+old/.venv/*
 __pycache__/*
-.venv/*
+venv/*
