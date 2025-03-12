@@ -12,10 +12,10 @@ font = pygame.font.SysFont('Arial', 30)
 
 # CHARACTERS
 mario_x = 100
-mario_y = 374
+mario_y = 370
 (mario_shape, mario_body) = get_mario(space, (mario_x, mario_y))
 mario_img = get_mario_image()
-mario_speed = 10
+mario_speed = 1
 
 #BG
 bg = get_static_background(space)
@@ -47,8 +47,6 @@ while running:
         mario_body.velocity = (mario_speed, mario_body.velocity.y)
     elif keys[pygame.K_LEFT]:
         mario_body.velocity = (-mario_speed, mario_body.velocity.y)
-    else:
-        mario_body.velocity = (0,mario_body.velocity.y)
 
     # update physics and redraw
     screen.fill((0,0,0))

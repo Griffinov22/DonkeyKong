@@ -19,21 +19,21 @@ tallBarrelImageWidth = tallBarrelImage.get_width()
 # GLOBALS
 BARS_CONFIG = [
     # bottom bar and ending ramp
-        [(50,380), 160, 0],
-        [(215,380), 140, 3],
-    # bar 2 
-        [(50,330), 290, -3],
-    # bar 3
-        [(70, 300), 290, 3],
-    # bar 4
-        [(50, 230), 290, -3],
-    # bar 5
-        [(70, 200), 290, 3],
-    # bar 6 small ram and bar
-        [(250, 150), 90, -3],
-        [(50, 150), 195, 0],
-    # bar 7 princess bar
-        [(150, 115), 80, 0]
+        [(50,380), 100, 0],
+    #     [(215,380), 140, 3],
+    # # bar 2 
+    #     [(50,330), 290, -3],
+    # # bar 3
+    #     [(70, 300), 290, 3],
+    # # bar 4
+    #     [(50, 230), 290, -3],
+    # # bar 5
+    #     [(70, 200), 290, 3],
+    # # bar 6 small ram and bar
+    #     [(250, 150), 90, -3],
+    #     [(50, 150), 195, 0],
+    # # bar 7 princess bar
+    #     [(150, 115), 80, 0]
     ]
 
 LADDERS_CONFIG = [
@@ -69,14 +69,14 @@ def get_static_background(space):
             "items": get_bars(space),
             "image": barImage
             },
-        "ladders" : {
-            "items":get_ladders(space),
-            "image": ladderImage
-            },
-        "tallBarells": {
-            "items": get_tallBarrels(space),
-            "image": tallBarrelImage
-        }
+        # "ladders" : {
+        #     "items":get_ladders(space),
+        #     "image": ladderImage
+        #     },
+        # "tallBarells": {
+        #     "items": get_tallBarrels(space),
+        #     "image": tallBarrelImage
+        # }
     }
     return bg
 
@@ -103,12 +103,12 @@ def get_bars(space):
 def make_bar(pos,width,space, rotation = 0) -> list[pymunk.Poly]:
     bars = []
 
-    for i in range(0, width + 1, barWidth):
+    for i in range(0, width, barWidth):
         barBody = pymunk.Body(body_type=pymunk.Body.STATIC)
         
         offset_y = i * math.sin(math.radians(rotation))
 
-        barBody.position = (pos[0] + i, pos[1] - offset_y)
+        barBody.position = (pos[0] + i + barWidth / 2, pos[1] - offset_y)
 
         barShape = pymunk.Poly.create_box(barBody, (barWidth, barHeight))
         barShape.collision_type = COLLISIONTYPES.bar_coll
@@ -175,12 +175,7 @@ def draw_bg(screen, bg):
             image = bgObj["image"]
             pos = item.body.position
             rect = image.get_rect(center=(pos[0], pos[1]))
-
-            if rect.height < image.get_height():
-                cropped_image = pygame.transform.chop(image, rect)
-                screen.blit(cropped_image, rect)
-            else:
-                screen.blit(image, rect)
+            screen.blit(image, rect)
 
 def draw_box(screen, body, shape):
     pos = body.position
