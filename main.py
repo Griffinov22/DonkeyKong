@@ -22,6 +22,13 @@ section_height = window_height // 32
 # the space to bump mario up when he running into the bars
 slope = section_height // 8
 
+
+barrel_spawn_time = 360
+barrel_count = barrel_spawn_time / 2
+barrel_time = 360
+# rolling barrel // play with scale numbers
+barrel_img = pygame.transform.scale(pygame.image.load("assets/barrels/barrel.png"), (section_width * 1.5, section_height * 2))
+
 # bars config
 start_y = window_height - 2 * section_height
 row2_y = start_y - 4 * section_height
@@ -78,6 +85,34 @@ levels = [{'bridges': [(1, start_y, 15), (16, start_y - slope, 3),
                        (10, row6_y - 17 * slope, 2), (12, -5, 13), (10, -5, 13)],
           'hammers': [(4, row6_top + section_height), (4, row4_top+section_height)],
            'target': (13, row6_y - 4 * section_height, 3)}]
+
+class Barrel(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        # size of the barrels
+        self.image = pygame.Surface((50,50))
+        self.rect = self.image.get_rect()
+        self.rect.center = (x,y)
+        self.y_change = 0
+        self.x_change = 1
+        # the barrel can have 4 states (0-3)
+        self.pos = 0
+        self.count = 0
+
+        self.oil_collision = False
+        self.falling = False
+        self.check_lad = False
+        self.bottom = self.rect
+        
+    def update(self):
+        pass
+
+    def check_fall(self):
+        pass
+
+    def draw(self):
+        screen.blit(pygame.transform.rotate(barrel_img, 90 * self.pos), self.rect)
+
 
 
 class Bridge:
@@ -165,12 +200,27 @@ def draw_screen():
 
     return platforms, climbers
 
-
+barrels = pygame.sprite.Group()
 
 running = True
 while running:
     screen.fill('black')
     timer.tick(fps)
+
+    if barrel_count < barrel_spawn_time:
+        barrel_count += 1
+    else:
+        # setting rand time to spawn
+        barrel_count = random.randint(0,120)
+        barrel_time = barrel_count - barrel_spawn_time
+        # location to drop barrel on top row bar
+        barrel = Barrel(150,195)
+        barrels.add(barrel)
+    
+    for barrel in barrels:
+        # draw rolling barrels
+        barrel.draw()
+
 
     # draw bars and ladders using function
     plats, lads = draw_screen()
