@@ -16,6 +16,10 @@ timer = pygame.time.Clock()
 fps = 60
 
 pygame.display.set_caption("Donkey Kong Rebuild 🦍🦍")
+
+font = pygame.font.Font('freesansbold.ttf', 50)
+font2 = pygame.font.Font('freesansbold.ttf', 30)
+
 screen = pygame.display.set_mode((window_width,window_height))
 # break screen up into 32x32 grid
 section_width = window_width // 32
@@ -30,6 +34,8 @@ barrel_time = 360
 # rolling barrel // play with scale numbers
 barrel_img = pygame.transform.scale(pygame.image.load("assets/barrels/barrel.png"), (section_width * 1.5, section_height * 2))
 
+# flame image
+flames_img = pygame.transform.scale(pygame.image.load("assets/fire.png"), (section_width * 2, section_height))
 # bars config
 start_y = window_height - 2 * section_height
 row2_y = start_y - 4 * section_height
@@ -45,10 +51,14 @@ row2_top = row2_y - 8 * slope
 row1_top = start_y - 5 * slope
 
 # level 1
+# expand levels array to more levels (but this is already taking 40+ hrs)
 active_level = 0
 
 # should spawn fireball
 fireball_trigger = False
+
+# 1s counter for fps drawing (0-59)
+counter = 0
 
 # levels list[dict]
 # think 'background'
@@ -93,7 +103,7 @@ levels = [{'bridges': [(1, start_y, 15), (16, start_y - slope, 3),
 class Barrel(pygame.sprite.Sprite):
     def __init__(self, x_pos, y_pos):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((48, 48))
+        self.image = pygame.Surface((47, 47))
         self.rect = self.image.get_rect()
         self.rect.center = (x_pos, y_pos)
         self.y_change = 0
@@ -241,16 +251,70 @@ def draw_screen():
 
     return platforms, climbers
 
+def draw_extras():
+    # lives, level, bonus text
+    # draw peach
+    # draw oil drum
+    oil = draw_oil()
+    # draw stationary barrels by dk
+    draw_barrels()
+    # draw dk
+    draw_kong()
+
+    return oil
+
+def draw_oil():
+    # math based on section width and height to get the right size. DO NOT TOUCH
+    x_coord, y_coord = 4 * section_width, window_height - 4.5 * section_height
+    oil = pygame.draw.rect(screen, 'blue', [x_coord, y_coord, 2 * section_width, 2.5 * section_height])
+    pygame.draw.rect(screen, 'blue', [x_coord - 0.1 * section_width, y_coord, 2.2 * section_width, .2 * section_height])
+    pygame.draw.rect(screen, 'blue',
+                     [x_coord - 0.1 * section_width, y_coord + 2.3 * section_height, 2.2 * section_width,
+                      .2 * section_height])
+    pygame.draw.rect(screen, 'light blue',
+                     [x_coord + 0.1 * section_width, y_coord + .2 * section_height, .2 * section_width,
+                      2 * section_height])
+    pygame.draw.rect(screen, 'light blue',
+                     [x_coord, y_coord + 0.5 * section_height, 2 * section_width, .2 * section_height])
+
+    pygame.draw.rect(screen, 'light blue',
+                     [x_coord, y_coord + 1.7 * section_height, 2 * section_width, .2 * section_height])
+    
+    # antialias = True (smooths out fonts)
+    screen.blit(font2.render('OIL', True, 'light blue'), (x_coord + .4 * section_width, y_coord + 0.7 * section_height))
+    for i in range(4):
+        pygame.draw.circle(screen, 'red',
+                           (x_coord + 0.5 * section_width + i * 0.4 * section_width, y_coord + 2.1 * section_height), 3)
+    # draw the flames on top
+    if counter < 15 or 30 < counter < 45:
+        screen.blit(flames_img, (x_coord, y_coord - section_height))
+    else:
+        # flip x = True, y = False
+        screen.blit(pygame.transform.flip(flames_img, True, False), (x_coord, y_coord - section_height))
+    return oil
+
+def draw_barrels():
+    pass
+
+def draw_kong():
+    pass
+
 barrels = pygame.sprite.Group()
-oil_drum = pygame.rect.Rect((1,1),(1,1))
 
 running = True
 while running:
     screen.fill('black')
     timer.tick(fps)
 
+    if counter < 60:
+        counter += 1
+    else:
+        counter = 0
+
     # draw bars and ladders using function
     plats, lads = draw_screen()
+    # dk, oil barrel, barrels next to dk
+    oil_drum = draw_extras()
     # barrel_count - time since last spawn
     if barrel_count < barrel_spawn_time:
         barrel_count += 1
