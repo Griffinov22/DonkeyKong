@@ -9,7 +9,8 @@ import pygame
 os.environ["SDL_VIDEO_CENTERED"] = '1' # gets information for the full screen
 pygame.init()
 info = pygame.display.Info()
-window_width, window_height = 500, 600
+screen_width, screen_height = info.current_w, info.current_h
+window_width, window_height = screen_width - 800, screen_height - 150
 
 timer = pygame.time.Clock()
 fps = 60
@@ -22,7 +23,7 @@ section_height = window_height // 32
 # the space to bump mario up when he running into the bars
 slope = section_height // 8
 
-
+# barrels spawn roughly every 6 seconds (60fps * 6s = 360)
 barrel_spawn_time = 360
 barrel_count = barrel_spawn_time / 2
 barrel_time = 360
@@ -45,6 +46,9 @@ row1_top = start_y - 5 * slope
 
 # level 1
 active_level = 0
+
+# should spawn fireball
+fireball_trigger = False
 
 # levels list[dict]
 # think 'background'
@@ -87,90 +91,127 @@ levels = [{'bridges': [(1, start_y, 15), (16, start_y - slope, 3),
            'target': (13, row6_y - 4 * section_height, 3)}]
 
 class Barrel(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x_pos, y_pos):
         pygame.sprite.Sprite.__init__(self)
-        # size of the barrels
-        self.image = pygame.Surface((50,50))
+        self.image = pygame.Surface((48, 48))
         self.rect = self.image.get_rect()
-        self.rect.center = (x,y)
+        self.rect.center = (x_pos, y_pos)
         self.y_change = 0
         self.x_change = 1
-        # the barrel can have 4 states (0-3)
         self.pos = 0
         self.count = 0
-
         self.oil_collision = False
         self.falling = False
         self.check_lad = False
         self.bottom = self.rect
-        
-    def update(self):
-        pass
+
+    def update(self, fire_trig):
+        if self.y_change < 8 and not self.falling:
+            barrel.y_change += 2
+        for i in range(len(plats)):
+            if self.bottom.colliderect(plats[i]):
+                self.y_change = 0
+                self.falling = False
+        if self.rect.colliderect(oil_drum):
+            if not self.oil_collision:
+                self.oil_collision = True
+                if random.randint(0, 4) == 4:
+                    fire_trig = True
+        if not self.falling:
+            if row5_top >= self.rect.bottom or row3_top >= self.rect.bottom >= row4_top or row1_top > self.rect.bottom >= row2_top:
+                self.x_change = 3
+            else:
+                self.x_change = -3
+        else:
+            self.x_change = 0
+        self.rect.move_ip(self.x_change, self.y_change)
+        if self.rect.top > screen_height:
+            self.kill()
+        if self.count < 15:
+            self.count += 1
+        else:
+            self.count = 0
+            if self.x_change > 0:
+                if self.pos < 3:
+                    self.pos += 1
+                else:
+                    self.pos = 0
+            else:
+                if self.pos > 0:
+                    self.pos -= 1
+                else:
+                    self.pos = 3
+        self.bottom = pygame.rect.Rect((self.rect[0], self.rect.bottom), (self.rect[2], 3))
+        return fire_trig
 
     def check_fall(self):
-        pass
+        already_collided = False
+        below = pygame.rect.Rect((self.rect[0], self.rect[1] + section_height), (self.rect[2], section_height))
+        for lad in lads:
+            if below.colliderect(lad) and not self.falling and not self.check_lad:
+                self.check_lad = True
+                already_collided = True
+                if random.randint(0, 60) == 60:
+                    self.falling = True
+                    self.y_change = 4
+        if not already_collided:
+            self.check_lad = False
 
     def draw(self):
-        screen.blit(pygame.transform.rotate(barrel_img, 90 * self.pos), self.rect)
-
-
+        screen.blit(pygame.transform.rotate(barrel_img, 90 * self.pos), self.rect.topleft)
 
 class Bridge:
-    def __init__(self, x,y, width):
-        self.x = x * section_width
-        self.y = y
-        self.width = width
+    def __init__(self, x_pos, y_pos, length):
+        self.x_pos = x_pos * section_width
+        self.y_pos = y_pos
+        self.length = length
         self.top = self.draw()
 
     def draw(self):
-        line_width = 3
-        platform_color = (225,51,129) # you could use red or dark red
-        for i in range(self.width):
-            bot_coord = self.y + section_height
-            left_coord = self.x + (section_width * i)
-            mid_coord = left_coord + (section_width * 1/2) # half the box
+        line_width = 7
+        platform_color = (225, 51, 129)
+        for i in range(self.length):
+            bot_coord = self.y_pos + section_height
+            left_coord = self.x_pos + (section_width * i)
+            mid_coord = left_coord + (section_width * 0.5)
             right_coord = left_coord + section_width
-            top_coord = self.y
-            # draws straight across
-            # top boundary
-            pygame.draw.line(screen, platform_color, (left_coord, top_coord), (right_coord, top_coord), line_width)
-            # bottom boundary
-            pygame.draw.line(screen, platform_color, (left_coord, bot_coord), (right_coord, bot_coord), line_width)
-            # draws the cross section of the bars
-            pygame.draw.line(screen, platform_color, (left_coord, bot_coord), (mid_coord, top_coord), line_width)
-            pygame.draw.line(screen, platform_color, (mid_coord, top_coord), (right_coord, bot_coord), line_width)
-        # get the top platform surface
-        top_line = pygame.rect.Rect((self.x, self.y), (self.width * section_width, 2))
-        # shows a line on top of bar
+            top_coord = self.y_pos
+            # draw 4 lines, top, bot, left diag, right diag
+            pygame.draw.line(screen, platform_color, (left_coord, top_coord),
+                             (right_coord, top_coord), line_width)
+            pygame.draw.line(screen, platform_color, (left_coord, bot_coord),
+                             (right_coord, bot_coord), line_width)
+            pygame.draw.line(screen, platform_color, (left_coord, bot_coord),
+                             (mid_coord, top_coord), line_width)
+            pygame.draw.line(screen, platform_color, (mid_coord, top_coord),
+                             (right_coord, bot_coord), line_width)
+        # get the top platform 'surface'
+        top_line = pygame.rect.Rect((self.x_pos, self.y_pos), (self.length * section_width, 2))
         # pygame.draw.rect(screen, 'blue', top_line)
         return top_line
 
 class Ladder:
-    # legth is height
-    def __init__(self, x, y, length):
-        self.x = x * section_width
-        self.y = y
+    def __init__(self, x_pos, y_pos, length):
+        self.x_pos = x_pos * section_width
+        self.y_pos = y_pos
         self.length = length
-        # used for if mario is climbing
         self.body = self.draw()
-    
+
     def draw(self):
         line_width = 3
-        ladder_color = 'light blue'
+        lad_color = 'light blue'
+        lad_height = 0.6
         for i in range(self.length):
-            top = self.y + 0.6 * section_height * i
-            bot = top + 0.6 * section_height
-            # y position!
-            mid = (0.6 / 2) * section_height + top
-            left = self.x
-            right = left + section_width
-            # left side
-            pygame.draw.line(screen, ladder_color, (left, top), (left, bot), line_width)
-            # right side
-            pygame.draw.line(screen, ladder_color, (right, top), (right, bot), line_width)
-            # wrung (middle part)
-            pygame.draw.line(screen, ladder_color, (left, mid), (right, mid), line_width)
-        body = pygame.rect.Rect((self.x, self.y - section_height), (section_width, (0.6 * self.length * section_height + section_height)))
+            top_coord = self.y_pos + lad_height * section_height * i
+            bot_coord = top_coord + lad_height * section_height
+            mid_coord = (lad_height / 2) * section_height + top_coord
+            left_coord = self.x_pos
+            right_coord = left_coord + section_width
+            pygame.draw.line(screen, lad_color, (left_coord, top_coord), (left_coord, bot_coord), line_width)
+            pygame.draw.line(screen, lad_color, (right_coord, top_coord), (right_coord, bot_coord), line_width)
+            pygame.draw.line(screen, lad_color, (left_coord, mid_coord), (right_coord, mid_coord), line_width)
+        body = pygame.rect.Rect((self.x_pos, self.y_pos - section_height),
+                                (section_width, (lad_height * self.length * section_height + section_height)))
         return body
 
 
@@ -201,29 +242,32 @@ def draw_screen():
     return platforms, climbers
 
 barrels = pygame.sprite.Group()
+oil_drum = pygame.rect.Rect((1,1),(1,1))
 
 running = True
 while running:
     screen.fill('black')
     timer.tick(fps)
 
+    # draw bars and ladders using function
+    plats, lads = draw_screen()
+    # barrel_count - time since last spawn
     if barrel_count < barrel_spawn_time:
         barrel_count += 1
     else:
         # setting rand time to spawn
         barrel_count = random.randint(0,120)
+        # time for donkey kong to throw the barrel
         barrel_time = barrel_count - barrel_spawn_time
         # location to drop barrel on top row bar
-        barrel = Barrel(150,195)
+        barrel = Barrel(270,270)
         barrels.add(barrel)
     
-    for barrel in barrels:
+    for barrel in barrels:     
         # draw rolling barrels
         barrel.draw()
-
-
-    # draw bars and ladders using function
-    plats, lads = draw_screen()
+        barrel.check_fall()
+        fireball_trigger = barrel.update(fireball_trigger)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
