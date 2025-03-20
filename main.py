@@ -1,7 +1,7 @@
 # DONKEY KONG REBUILT
 
 # By: Griffin Overmyer
-# Note to T.A: This project started in the old/ folder, but mario was glitching on the bars using pymunk, so I decided to use pygame and sprites instead of pymunk with pygame. Online resources were very helpful with the making of this game. Any questions about how it works should be directed towards me. Thank you. The only requirement per the assignment was to use Pygame in your python game. Thank you for reading. (:
+# Note to T.A: This project started in the old/ folder, but mario was glitching on the bars using pymunk, so I decided to use pygame and sprites instead of pymunk with pygame. Online resources were very helpful with the making of this game. Any questions about how it works should be directed towards me. Thank you. The only requirement per the assignment was to use Pygame in your python game. Thank you for reading, and I hope you enjoy the game. (:
 
 import os
 import random
